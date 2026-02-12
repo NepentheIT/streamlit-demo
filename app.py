@@ -175,7 +175,7 @@ if "Mode A" in mode:
     exp_c1, exp_c2 = st.columns([1.2, 1])
 
     with exp_c1:
-        st.info("🤔 核心问题：为什么要做扩张？")
+        st.info("🤔 核心问题：为什么要做扩张？？")
         st.markdown(f"""
             我们的目标是让 A 的列 ($n={n}$) 和 B 的行 ($p={p}$) 咬合。
             唯一的办法是把它们都映射到一个**公共的高维空间**，其维度为 $L = \\text{{LCM}}({n}, {p}) = {res['LCM']}$。

@@ -2,3 +2,8 @@ streamlit
 numpy
 matplotlib
 seaborn
+streamlit
+numpy
+matplotlib
+seaborn
+
