@@ -5,18 +5,11 @@ import seaborn as sns
 import math
 import platform
 
-# ================= 1. 解决中文乱码与负号显示问题 =================
-system_name = platform.system()
-if system_name == "Windows":
-    plt.rcParams['font.sans-serif'] = ['SimHei']
-elif system_name == "Darwin":
-    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
-else:
-    plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei']
 plt.rcParams['axes.unicode_minus'] = False
 
+
 # ================= 2. 页面配置 =================
-st.set_page_config(page_title="STP 多模态融合实验室", layout="wide", page_icon="🧬")
+st.set_page_config(page_title="STP 乘法加法演示", layout="wide", page_icon="🧬")
 
 # 自定义CSS
 st.markdown("""
@@ -100,15 +93,22 @@ def draw_heatmap(data, title, cmap="Blues", annot=True):
 def draw_signal_comparison(v_orig, v_expand, title, color):
     """绘制信号拉伸前后的波形对比"""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 3))
+
+    # --- 修改点 1: 将所有图表内部标题改为英文 ---
+
     # 原始信号
     ax1.plot(v_orig, marker='o', linestyle='--', color=color, alpha=0.7)
-    ax1.set_title(f"原始信号 ({len(v_orig)}维)")
+    # 原: f"原始信号 ({len(v_orig)}维)"
+    ax1.set_title(f"Original Signal ({len(v_orig)} dim)")
     ax1.grid(True, alpha=0.3)
+
     # 扩张信号
     ax2.plot(v_expand, marker='s', linestyle='-', color=color)
-    ax2.set_title(f"STP扩张后 ({len(v_expand)}维)")
+    # 原: f"STP扩张后 ({len(v_expand)}维)"
+    ax2.set_title(f"Expanded via STP ({len(v_expand)} dim)")
     ax2.grid(True, alpha=0.3)
-    plt.suptitle(title)
+
+    plt.suptitle(title)  # 这里的 title 是外部传入的，需要在调用时保证是英文
     plt.tight_layout()
     return fig
 
@@ -165,13 +165,9 @@ if "Mode A" in mode:
 
     st.divider()
 
-    # --- 理论推导 ---
-    # ... (前面的代码保持不变) ...
-
     # --- 2. 理论推导与扩张过程 (Deep Dive) ---
     st.subheader("2. 核心机制：基于克罗内克积的扩张")
 
-    # 拆分布局：左边讲原理，右边看图
     exp_c1, exp_c2 = st.columns([1.2, 1])
 
     with exp_c1:
@@ -180,54 +176,24 @@ if "Mode A" in mode:
             我们的目标是让 A 的列 ($n={n}$) 和 B 的行 ($p={p}$) 咬合。
             唯一的办法是把它们都映射到一个**公共的高维空间**，其维度为 $L = \\text{{LCM}}({n}, {p}) = {res['LCM']}$。
             """)
-
         st.markdown("#### 🔧 操作工具：单位矩阵 (Identity Matrix)")
         st.markdown(f"""
-            为了“无损”地放大矩阵，我们使用 **单位矩阵 ($I_k$)** 作为扩张算子。
-            它对角线为1，其余为0。
-
             在此次运算中，我们需要两个特定的单位矩阵：
             1. **用于 A 的算子 ($I_{{{res['alpha']}}}$)**: {res['alpha']} 维单位矩阵
             2. **用于 B 的算子 ($I_{{{res['beta']}}}$)**: {res['beta']} 维单位矩阵
             """)
 
-        # 动态展示单位矩阵的样子
         if res['alpha'] > 1:
             I_a_disp = np.eye(res['alpha'], dtype=int)
             st.latex(rf"I_{{{res['alpha']}}} = " +
                      r"\begin{bmatrix} " +
                      r" \\ ".join([" & ".join(map(str, row)) for row in I_a_disp]) +
                      r" \end{bmatrix}")
-        else:
-            st.markdown(f"*注：A 不需要扩张 (因子为1)*")
 
         st.markdown("#### ⚡ 扩张操作：右克罗内克积 (Right Kronecker Product)")
         st.markdown(r"""
             扩张公式为：$A' = A \otimes I_k$。
-
-            **这不仅仅是复制！** 它的物理动作是：
             把 A 中的**每一个元素** $a_{ij}$，都替换成一个 **对角块** $a_{ij} \times I_k$。
-            """)
-
-        # 举例说明
-        example_val = A[0, 0]
-        st.markdown(f"""
-            > **举个栗子 🌰**：
-            > 假设 A 的第一个元素是 **{example_val}**。
-            > 在扩张后的矩阵 A' 中，这个 **{example_val}** 会变成一个 **{res['alpha']}x{res['alpha']}** 的小方块：
-            """)
-
-        # 构造一个小的 LaTeX 矩阵展示这个块
-        block_content = r" \\ ".join(
-            [" & ".join([str(example_val) if i == j else "0" for j in range(res['alpha'])]) for i in
-             range(res['alpha'])])
-        st.latex(
-            rf"{example_val} \xrightarrow{{\otimes I_{{{res['alpha']}}}}} \begin{{bmatrix}} {block_content} \end{{bmatrix}}")
-
-        st.success("""
-            **为什么要这样？**
-            使用单位矩阵 $I$ 而不是全1矩阵，是为了保持**稀疏性**和**线性独立性**。
-            这保证了我们只是改变了“分辨率”（Dimension），而没有改变数据的“内容”（Structure）。
             """)
 
     with exp_c2:
@@ -236,18 +202,20 @@ if "Mode A" in mode:
 
         with expand_tabs[0]:
             st.write(f"**原始 A ({m}x{n})**")
+            # --- 修改点: 标题英文 ---
             st.pyplot(draw_heatmap(A, "Original A", "Purples"))
 
-            st.write("⬇️ **扩张后** (注意看数字是如何沿对角线排列的)")
-            st.write(f"**扩张 A' = A ⊗ I_{res['alpha']}**")
+            st.write("⬇️ **扩张后**")
+            # --- 修改点: 标题英文 ---
             st.pyplot(draw_heatmap(res['A_kron'], f"Expanded A' ({res['A_kron'].shape})", "Purples"))
 
         with expand_tabs[1]:
             st.write(f"**原始 B ({p}x{q})**")
+            # --- 修改点: 标题英文 ---
             st.pyplot(draw_heatmap(B, "Original B", "Oranges"))
 
             st.write("⬇️ **扩张后**")
-            st.write(f"**扩张 B' = B ⊗ I_{res['beta']}**")
+            # --- 修改点: 标题英文 ---
             st.pyplot(draw_heatmap(res['B_kron'], f"Expanded B' ({res['B_kron'].shape})", "Oranges"))
 
     st.divider()
@@ -257,11 +225,11 @@ if "Mode A" in mode:
 
     rc1, rc2 = st.columns([2, 1])
     with rc1:
-        st.pyplot(draw_heatmap(res['Result'], "STP Result", "Greens"))
+        # --- 修改点: 标题英文 ---
+        st.pyplot(draw_heatmap(res['Result'], "STP Product Result", "Greens"))
     with rc2:
         st.markdown(f"**结果维度:** ${res['Result'].shape[0]} \\times {res['Result'].shape[1]}$")
 
-# ================= Mode B: 特征融合 =================
 # ================= Mode B: 广义加法与特征融合 =================
 elif "Mode B" in mode:
     # 子导航栏
@@ -304,19 +272,17 @@ elif "Mode B" in mode:
 
         # 初始化与校验
         if 'A_add' not in st.session_state or 'dims_add' not in st.session_state or st.session_state.dims_add != (
-        ma, na, mb, nb):
+                ma, na, mb, nb):
             st.session_state.A_add = np.random.randint(1, 10, (ma, na))
             st.session_state.B_add = np.random.randint(1, 10, (mb, nb))
             st.session_state.dims_add = (ma, na, mb, nb)
 
         A, B = st.session_state.A_add, st.session_state.B_add
 
-        # --- 计算逻辑 (局部定义，保持整洁) ---
+        # --- 计算逻辑 ---
         alpha_r, alpha_c = lcm_row // ma, lcm_col // na
         beta_r, beta_c = lcm_row // mb, lcm_col // nb
 
-        # 使用全1矩阵进行广播扩张
-        # 解释：加法通常意味着能量或信息的叠加，所以用全1矩阵相当于把一个像素点放大成一个色块
         J_A = np.ones((alpha_r, alpha_c), dtype=int)
         J_B = np.ones((beta_r, beta_c), dtype=int)
 
@@ -332,17 +298,10 @@ elif "Mode B" in mode:
             st.markdown(f"""
             与乘法使用**单位矩阵 ($I$)** 不同，跨维加法通常使用 **全 1 矩阵 ($\mathbf{{1}}$)** 进行扩张。
 
-            **为什么要用全 1 矩阵？**
-            * 物理意义类似于 **“图像缩放 (Nearest Neighbor Resize)”**。
-            * 我们把 A 中的每一个数值 $a_{{ij}}$，复制成一个 ${alpha_r} \\times {alpha_c}$ 的色块。
-            * 这样保证了信息铺满整个空间，而不是像单位矩阵那样留下大量 0。
-
             **数学公式：**
             $$A' = A \otimes \mathbf{{1}}_{{{alpha_r} \\times {alpha_c}}}$$
             $$B' = B \otimes \mathbf{{1}}_{{{beta_r} \\times {beta_c}}}$$
             """)
-
-            # 举例
             ex_val = A[0, 0]
             st.markdown(f"> **微观示例**：\n> 元素 **{ex_val}** 被扩张为：")
             block = np.full((alpha_r, alpha_c), ex_val)
@@ -352,12 +311,14 @@ elif "Mode B" in mode:
             tab_a, tab_b = st.tabs(["观察 A 的扩张", "观察 B 的扩张"])
             with tab_a:
                 c_a1, c_a2 = st.columns(2)
-                with c_a1: st.pyplot(draw_heatmap(A, f" A ({ma}x{na})", "Blues"))
-                with c_a2: st.pyplot(draw_heatmap(A_exp, f" A' ({lcm_row}x{lcm_col})", "Blues"))
+                # --- 修改点: 标题英文 ---
+                with c_a1: st.pyplot(draw_heatmap(A, f"Original A ({ma}x{na})", "Blues"))
+                with c_a2: st.pyplot(draw_heatmap(A_exp, f"Broadcasted A' ({lcm_row}x{lcm_col})", "Blues"))
             with tab_b:
                 c_b1, c_b2 = st.columns(2)
-                with c_b1: st.pyplot(draw_heatmap(B, f" B ({mb}x{nb})", "Oranges"))
-                with c_b2: st.pyplot(draw_heatmap(B_exp, f" B' ({lcm_row}x{lcm_col})", "Oranges"))
+                # --- 修改点: 标题英文 ---
+                with c_b1: st.pyplot(draw_heatmap(B, f"Original B ({mb}x{nb})", "Oranges"))
+                with c_b2: st.pyplot(draw_heatmap(B_exp, f"Broadcasted B' ({lcm_row}x{lcm_col})", "Oranges"))
 
         st.divider()
         st.subheader("🏁 加法结果")
@@ -366,7 +327,8 @@ elif "Mode B" in mode:
         # 结果展示
         final_c1, final_c2 = st.columns([2, 1])
         with final_c1:
-            st.pyplot(draw_heatmap(Res_add, "STP Results", "Reds"))
+            # --- 修改点: 标题英文 ---
+            st.pyplot(draw_heatmap(Res_add, "STP Addition Results", "Reds"))
         with final_c2:
             st.success("""
             **✅ 结果解读：**
@@ -380,7 +342,6 @@ elif "Mode B" in mode:
         st.header("🧬 应用场景：LUTBIO 指纹与人脸融合")
         st.caption("基于前述矩阵加法原理，针对特征向量 (Vector) 的特殊应用")
 
-        # ... (这里保留你之前 Mode B 的代码，只稍微调整缩进) ...
         c1, c2 = st.columns(2)
         with c1:
             dim_face = st.slider("人脸维度", 2, 20, 4)
@@ -400,17 +361,22 @@ elif "Mode B" in mode:
         st.subheader("📈 信号对齐视角")
         c_s1, c_s2 = st.columns(2)
         with c_s1:
-            st.pyplot(draw_signal_comparison(st.session_state.v_face, res_add['V1_kron'], "人脸", "blue"))
+            # --- 修改点 2: 传入英文参数 ---
+            # 原: "人脸" -> "Face Signal"
+            st.pyplot(draw_signal_comparison(st.session_state.v_face, res_add['V1_kron'], "Face Signal (A)", "blue"))
         with c_s2:
-            st.pyplot(draw_signal_comparison(st.session_state.v_finger, res_add['V2_kron'], "指纹", "orange"))
+            # 原: "指纹" -> "Fingerprint Signal (B)"
+            st.pyplot(draw_signal_comparison(st.session_state.v_finger, res_add['V2_kron'], "Fingerprint Signal (B)",
+                                             "orange"))
 
         st.subheader("🧮 融合结果")
         c_m1, c_m2, c_eq, c_m3 = st.columns([1, 1, 0.2, 1])
         with c_m1:
-            st.pyplot(draw_heatmap(res_add['V1_kron'], "Face'", "Blues", False))
+            # --- 修改点: 标题英文 ---
+            st.pyplot(draw_heatmap(res_add['V1_kron'], "Face (Expanded)", "Blues", False))
         with c_m2:
-            st.pyplot(draw_heatmap(res_add['V2_kron'], "Finger'", "Oranges", False))
+            st.pyplot(draw_heatmap(res_add['V2_kron'], "Fingerprint (Expanded)", "Oranges", False))
         with c_eq:
             st.markdown("### +")
         with c_m3:
-            st.pyplot(draw_heatmap(res_add['Result'], "Fused", "Reds"))
+            st.pyplot(draw_heatmap(res_add['Result'], "Fused Feature", "Reds"))
