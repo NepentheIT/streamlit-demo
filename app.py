@@ -352,12 +352,12 @@ elif "Mode B" in mode:
             tab_a, tab_b = st.tabs(["观察 A 的扩张", "观察 B 的扩张"])
             with tab_a:
                 c_a1, c_a2 = st.columns(2)
-                with c_a1: st.pyplot(draw_heatmap(A, f"原始 A ({ma}x{na})", "Blues"))
-                with c_a2: st.pyplot(draw_heatmap(A_exp, f"广播后 A' ({lcm_row}x{lcm_col})", "Blues"))
+                with c_a1: st.pyplot(draw_heatmap(A, f" A ({ma}x{na})", "Blues"))
+                with c_a2: st.pyplot(draw_heatmap(A_exp, f" A' ({lcm_row}x{lcm_col})", "Blues"))
             with tab_b:
                 c_b1, c_b2 = st.columns(2)
-                with c_b1: st.pyplot(draw_heatmap(B, f"原始 B ({mb}x{nb})", "Oranges"))
-                with c_b2: st.pyplot(draw_heatmap(B_exp, f"广播后 B' ({lcm_row}x{lcm_col})", "Oranges"))
+                with c_b1: st.pyplot(draw_heatmap(B, f" B ({mb}x{nb})", "Oranges"))
+                with c_b2: st.pyplot(draw_heatmap(B_exp, f" B' ({lcm_row}x{lcm_col})", "Oranges"))
 
         st.divider()
         st.subheader("🏁 加法结果")
@@ -366,7 +366,7 @@ elif "Mode B" in mode:
         # 结果展示
         final_c1, final_c2 = st.columns([2, 1])
         with final_c1:
-            st.pyplot(draw_heatmap(Res_add, "STP 加法结果", "Reds"))
+            st.pyplot(draw_heatmap(Res_add, "STP Results", "Reds"))
         with final_c2:
             st.success("""
             **✅ 结果解读：**
